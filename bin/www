@@ -1,0 +1,296 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('angular2-nodejs:server');
+var http2 = require('http');
+var request = require("request");
+const config = require('../config/config')
+
+// var yahooFinance = require('yahoo-finance');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || config.port);
+app.set('port', port);
+
+/*
+ * Create HTTP server.
+ */
+
+var server = http2.createServer(app);
+
+var io = require('socket.io').listen(server);
+
+io.on('connection', (socket) => {
+
+  console.log('new connection made with socket id. ' + socket.id);
+
+  socket.on('join', function (data) {
+    //joining
+    socket.join(data.room);
+
+    console.log(data.user + ' joined the room : ' + data.room);
+
+    socket.broadcast.to(data.room).emit('new user joined', { user: data.user, message: 'has joined this room.' });
+
+  });
+
+  socket.on('leave', function (data) {
+
+    console.log(data.user + 'left the room : ' + data.room);
+
+    socket.broadcast.to(data.room).emit('left room', { user: data.user, message: 'has left this room.' });
+
+    socket.leave(data.room);
+
+  });
+
+  socket.on('message', function (data) {
+    var header = { 'content-type': 'application/json', 'authorization': data.token };
+    request.post({
+      headers: header,
+      url: 'http://localhost:' + port + '/chats/chat',
+      body: data.mData,
+      json: true
+    }, function (error, response, body) {
+      io.in(data.mData.room).emit('new message', { user: data.mData.user, message: data.mData.message });
+    });
+  })
+
+  socket.on('userData', function (data) {
+    // console.log("Heee");
+    request.post({
+      headers: { 'content-type': 'application/json', 'Authorization': data.token },
+      url: 'http://localhost:' + port + '/stocks/getSubscribution',
+      body: data,
+      json: true
+    }, function (error, response, body) {
+      // console.log(body);
+      if (body == 'Unauthorized') {
+        // console.log("Hooo"); 
+      } else if (body != null) {
+        io.to(socket.id).emit('subscribedData', body.script);
+        body.script.forEach(element => {
+          socket.join(element.symbol);
+        });
+      }
+      // setInterval(intervalFunc, 1000);
+      intervalFunc();
+    });
+  });
+
+  function intervalFunc() {
+    request.get({
+      headers: { 'content-type': 'application/json' },
+      url: "https://query1.finance.yahoo.com//v6/finance/quote?&symbols=HDFCBANK.NS,TATAMOTORS.NS,AAPL,GBPUSD=X,INR=X,EURJPY=X",
+      json: true
+    }, function (error, response, body) {
+      // if (error) throw new Error(error);
+      if (error) {
+        console.log("Hiii");
+      } else {
+        if (body != undefined) {
+          if (body.quoteResponse.result != null) {
+            saveStockData(body.quoteResponse.result);
+            body.quoteResponse.result.forEach((element, index) => {
+              io.sockets.in(element.symbol).emit('scriptData', element);
+              let stockData = {
+                "symbol": element.symbol,
+                "price": element.regularMarketPrice
+              }
+              // console.log(stockData);
+              trade(stockData);
+            });
+          }
+        }
+      }
+    });
+  }
+
+  socket.on('subscribeScript', function (data) {
+    request.post({
+      headers: { 'content-type': 'application/json', 'Authorization': data.token },
+      url: 'http://localhost:' + port + '/stocks/subscribestock',
+      body: data,
+      json: true
+    }, function (error, response, body) {
+      // if (error) throw new Error(error);      
+      io.to(socket.id).emit('subscribeScript', body);
+      if (body.success == true) {
+        socket.join(body.data.symbol);
+      }
+    });
+  });
+
+  socket.on('trade', function (data) {
+    // console.log(data);
+    if (data.limitPrice == "" || data.limitPrice == data.currentPrice) {
+      // var resTradeAhead = tradeAhead(data);
+      var URL = 'http://localhost:' + port + '/stocks/confirmtrade';
+    } else {
+      var URL = 'http://localhost:' + port + '/stocks/pendingtrade';
+    }
+    request.post({
+      headers: { 'content-type': 'application/json', 'Authorization': data.token },
+      url: URL,
+      body: data,
+      json: true
+    }, function (error, response, body) {
+      // if (error) throw new Error(error);
+      io.to(socket.id).emit('trade', body);
+    });
+  });
+});
+
+/**
+ * Listen on provided port, on all network interfaces.
+**/
+server.listen(port, () => console.log(`Server listening on port ${port}!`));
+server.on('error', onError);
+server.on('listening', onListening);
+
+// Save stock data to database
+function saveStockData(data) {
+  request.post({
+    headers: { 'content-type': 'application/json' },
+    url: 'http://localhost:' + port + '/stocks/save',
+    body: data,
+    json: true
+  }, function (error, response, body) {
+    // if (error) throw new Error(error);    
+  });
+}
+
+function trade(data) {
+  // console.log(data);
+  request.post({
+    headers: { 'content-type': 'application/json' },
+    url: 'http://localhost:' + port + '/stocks/getpendingtrade',
+    body: data,
+    json: true
+  }, function (error, response, body) {
+    // if (error) throw new Error(error);
+    // console.log(body);
+    // confirmTrading(body);
+  });
+}
+
+function confirmTrading(data) {
+  // console.log(data);
+  request.post({
+    headers: { 'content-type': 'application/json' },
+    url: 'http://localhost:' + port + '/stocks/confirmtrading',
+    body: data,
+    json: true
+  }, function (error, response, body) {
+    // console.log(body);
+    // pendingTrading(data);
+    // if (error) throw new Error(error);
+  });
+}
+
+function pendingTrading(data) {
+  // console.log(data);
+  request.post({
+    headers: { 'content-type': 'application/json' },
+    url: 'http://localhost:' + port + '/stocks/pendingtrading',
+    body: data,
+    json: true
+  }, function (error, response, body) {
+    // console.log(body);
+    
+    // if (error) throw new Error(error);
+  });
+}
+
+// function tradeAhead(data) {
+//   let response = true;
+//   if (data.limitPrice == "") {
+//     if (response == true) {
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   } else {
+//     if (response == true) {
+//       // updateTradeStatus(data);
+//     }
+//   }
+// }
+
+function updateTradeStatus(data) {
+  request.post({
+    headers: { 'content-type': 'application/json' },
+    url: 'http://localhost:' + port + '/stocks/updatetrade',
+    body: data,
+    json: true
+  }, function (error, response, body) {
+    // if (error) throw new Error(error);
+  });
+}
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/*
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

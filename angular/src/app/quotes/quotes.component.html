@@ -1,0 +1,98 @@
+<div class="container">
+  <input [(ngModel)]="asyncSelected" [typeaheadAsync]="true" [typeahead]="dataSource" [typeaheadOptionsLimit]="7"
+    typeaheadOptionField="symbol" (typeaheadOnSelect)="typeaheadOnSelect($event)"
+    placeholder="Locations loaded with timeout" class="form-control">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Company Name</th>
+        <th>Price</th>
+        <th>Change Price</th>
+        <th>Change %</th>
+        <th>High</th>
+        <th>Low</th>
+        <th>Open</th>
+        <th>Close</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let quote of quotesArray; let i = index; " (click)="open(template, i)">
+        <td>{{quote.symbol}}</td>
+        <td>{{quote.shortName}}</td>
+        <td [ngClass]="{'success' : quote.bgSuccessClass, 'danger' : quote.bgDangerClass}">{{quote.regularMarketPrice}}
+        </td>
+        <td [ngClass]="{'successText' : quote.colorSuccessClass, 'dangerText' : quote.colorDangerClass}">
+          {{quote.regularMarketChange}}</td>
+        <td [ngClass]="{'successText' : quote.colorSuccessClass, 'dangerText' : quote.colorDangerClass}">
+          {{quote.regularMarketChangePercent}}</td>
+        <td>{{quote.regularMarketDayHigh}}</td>
+        <td>{{quote.regularMarketDayLow}}</td>
+        <td>{{quote.regularMarketOpen}}</td>
+        <td>{{quote.regularMarketPreviousClose}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <!-- <ngx-datatable class='table table-hover table-stripped' [columns]="columns" [columnMode]="columnModeSetting"
+    [scrollbarH]="scrollBarHorizontal" [headerHeight]="50" [footerHeight]="50" [rowHeight]="60" [limit]="5"
+    [scrollbarV]="true" [rows]='quotesArray' [selectionType]="'single'">
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center">
+      <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-row="row" let-value="value">
+        <div class="product_type_img">
+          <p>{{row.symbol}}</p>
+        </div>
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+    <ngx-datatable-column name="symbol" cellClass="d-flex align-items-center"></ngx-datatable-column>
+  </ngx-datatable> -->
+  <ng-template #template>
+    <!-- <div class="modal-header">
+      <h4 class="modal-title pull-left">Modal</h4>
+      <button type="button" class="btn btn-primary btn-sm" (click)="selectTab(1)">Select second tab</button>
+      <button type="button" class="btn btn-primary btn-sm" (click)="selectTab(2)">Select third tab</button>
+      <button type="button" class="close pull-right" aria-label="Close" (click)="modalRef.hide()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div> -->
+    <div class="modal-body">
+      <tabset #staticTabs>
+        <tab heading="Buy" style="margin-top: 20px;" (select)="tabSelect($event)">
+
+          <span>{{quotesArray[quoteIndex].symbol}}</span>
+          <span
+            [ngClass]="{'modelSuccess' : quotesArray[quoteIndex].bgSuccessClass == true, 'modelDanger' : quotesArray[quoteIndex].bgDangerClass == true}">{{quotesArray[quoteIndex].regularMarketPrice}}</span>
+          <div class="form-group">
+            <label for="price">Price</label>
+            <input type="text" [(ngModel)]="formData.limitPrice" class="form-control" id="price">
+          </div>
+          <div class="form-group">
+            <label for="qty">Quantity</label>
+            <input type="text" [(ngModel)]="formData.qty" class="form-control" id="qty">
+          </div>
+          <button type="submit" (click)="trade()" class="btn btn-primary">Submit</button>
+        </tab>
+        <tab heading="Sale" style="margin-top: 20px;" (select)="tabSelect($event)">
+          <span>{{quotesArray[quoteIndex].symbol}}</span>
+          <span
+            [ngClass]="{'modelSuccess' : quotesArray[quoteIndex].bgSuccessClass == true, 'modelDanger' : quotesArray[quoteIndex].bgDangerClass == true}">{{quotesArray[quoteIndex].regularMarketPrice}}</span>
+          <div class="form-group">
+            <label for="price">Price</label>
+            <input type="text" [(ngModel)]="formData.limitPrice" class="form-control" id="price">
+          </div>
+          <div class="form-group">
+            <label for="qty">Quantity</label>
+            <input type="text" [(ngModel)]="formData.qty" class="form-control" id="qty">
+          </div>
+          <button type="submit" (click)="trade()" class="btn btn-primary">Submit</button>
+        </tab>
+      </tabset>
+
+    </div>
+  </ng-template>
+
+</div>
