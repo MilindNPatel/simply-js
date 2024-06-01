@@ -1,0 +1,49 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/Cellar/yarn/1.22.4/libexec/bin/yarn.js
+
+PATH: 
+  /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Wireshark.app/Contents/MacOS
+
+Yarn version: 
+  1.22.4
+
+Node version: 
+  10.16.2
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: EACCES: permission denied, mkdir '/Users/milind/Applications/smartParking/node_modules/bl/node_modules'
+
+npm manifest: 
+  {
+    "name": "smartparking",
+    "version": "1.0.0",
+    "description": "Smart parking backend",
+    "main": "app.js",
+    "scripts": {
+      "start": "nodemon app.js --exec babel-node",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Milind Patel",
+    "license": "ISC",
+    "dependencies": {
+      "@babel/cli": "^7.8.4",
+      "@babel/core": "^7.9.0",
+      "@babel/node": "^7.8.7",
+      "@babel/preset-env": "^7.9.0",
+      "@babel/register": "^7.9.0",
+      "dotenv": "^8.2.0",
+      "express": "^4.17.1",
+      "mongoose": "^5.9.6",
+      "nodemon": "^2.0.2"
+    },
+    "devDependencies": {}
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

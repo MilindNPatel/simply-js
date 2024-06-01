@@ -1,0 +1,24 @@
+{
+    "name": "api",
+    "version": "1.0.0",
+    "description": "api",
+    "main": "app.js",
+    "scripts": {
+        "start": "nodemon app.js --exec babel-node",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Milind Patel",
+    "license": "ISC",
+    "dependencies": {
+        "@babel/cli": "^7.8.4",
+        "@babel/core": "^7.9.0",
+        "@babel/node": "^7.8.7",
+        "@babel/preset-env": "^7.9.0",
+        "@babel/register": "^7.9.0",
+        "body-parser": "^1.19.0",
+        "dotenv": "^8.2.0",
+        "express": "^4.17.1",
+        "mongoose": "^5.9.6",
+        "nodemon": "^2.0.2"
+    }
+}
